@@ -18,6 +18,7 @@ interface myobj {
 
 const Weather = () => {
   const [search, setSearch] = useState("Jaipur");
+  const [error, setError] = useState(false);
   const [currentWeather, setCurrentWeather] = useState({
     name: "",
     main: {
@@ -48,23 +49,28 @@ const Weather = () => {
 
   const searchWeather = async () => {
     let lat, lon;
+    let baseUrl = "https://openweathermap.org/data/2.5";
     var config = {
       method: "get",
-      url: `https://openweathermap.org/data/2.5/find?q=${search}&appid=439d4b804bc8187953eb36d2a8c26a02&units=metric`,
+      url: `${baseUrl}/find?q=${search}&appid=439d4b804bc8187953eb36d2a8c26a02&units=metric`,
     };
     var futureConfig = {
       method: "get",
-      url: `https://openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=439d4b804bc8187953eb36d2a8c26a02&units=metric`,
+      url: `${baseUrl}/forecast?lat=${lat}&lon=${lon}&appid=439d4b804bc8187953eb36d2a8c26a02&units=metric`,
     };
     try {
       const response = await axios(config);
       lat = response?.data?.list[0]?.coord?.lat;
       lon = response?.data?.list[0]?.coord?.lon;
-      setCurrentWeather(response?.data?.list[0]);
-      setFutureWeather(lat);
-      if (lat != null && lon != null) {
-        const futureDate = await axios(futureConfig);
-        setFutureWeather(futureDate);
+      if (response?.data?.list.length !== 0) {
+        setCurrentWeather(response?.data?.list[0]);
+        setFutureWeather(lat);
+        if (lat != null && lon != null) {
+          const futureDate = await axios(futureConfig);
+          setFutureWeather(futureDate);
+        }
+      } else {
+        setError(true);
       }
     } catch {
       console.log("err", Error);
@@ -79,11 +85,17 @@ const Weather = () => {
           label="Search City"
           variant="outlined"
           value={search}
+          error={error}
           onChange={(
             e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
           ) => setSearch(e.target.value)}
+          helperText={error ? "Please enter a valid city name." : null}
         />
-        <Button variant="contained" onClick={searchWeather}>
+        <Button
+          variant="contained"
+          sx={{ height: "3.5rem" }}
+          onClick={searchWeather}
+        >
           search
         </Button>
       </Stack>
